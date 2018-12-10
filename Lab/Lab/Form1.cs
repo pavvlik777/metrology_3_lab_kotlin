@@ -91,9 +91,24 @@ namespace Lab
             }
 
             SpenMetrics metrics1 = new SpenMetrics();
-            metrics1.FindSpen(FileName);
+            Dictionary<string, int>  spensData = metrics1.FindSpen(FileName);
+            int summarySpen = 0;
 
+            DataTable outputOperatorsData = new DataTable();
+            outputOperatorsData.Columns.Add("Идентификатор");
+            outputOperatorsData.Columns.Add("Спен");
 
+            foreach (var cur in spensData)
+            {
+                DataRow r = outputOperatorsData.NewRow();
+                r["Идентификатор"] = cur.Key;
+                r["Спен"] = cur.Value;
+                summarySpen += cur.Value;
+                outputOperatorsData.Rows.Add(r);
+            }
+
+            SpenTable.DataSource = outputOperatorsData;
+            OutputSpen.Text = $"Суммарный спен - {summarySpen}";
         }
     }
 }

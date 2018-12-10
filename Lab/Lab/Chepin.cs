@@ -19,6 +19,21 @@ namespace Lab
 
         public void AddSpen(string spen)
         {
+            while (true)
+            {
+                if (spen.Length > 0)
+                {
+                    if (spen[0] == '\r' || spen[0] == '\n' || spen[0] == ' ' || spen[0] == '\t')
+                        spen = spen.Remove(0, 1);
+                    else
+                        break;
+                }
+                else
+                    return;
+            }
+
+            //убирать числа
+
             if (spens.ContainsKey(spen))
                 spens[spen]++;
             else
@@ -28,7 +43,14 @@ namespace Lab
 
     public class SpenMetrics
     {
-        public void FindSpen(string filepath)
+        public SpenMetrics()
+        {
+            outputSpen = new SpenData();
+        }
+
+        SpenData outputSpen;
+
+        public Dictionary<string, int> FindSpen(string filepath)
         {
             string filecodeText = "";
             using (StreamReader sr = File.OpenText(filepath))
@@ -40,13 +62,12 @@ namespace Lab
                 }
             }
 
-            SpenData output = new SpenData();
             DeleteVarDeclarations(ref filecodeText);
             while (DeleteFunDeclarations(ref filecodeText)) ;
             RemoveSigns(ref filecodeText);
 
             ParseStringForSpen(filecodeText);
-            int a = 5;
+            return outputSpen.spens;
         }
 
         void RemoveSigns(ref string input)
@@ -69,12 +90,51 @@ namespace Lab
 
         void ParseStringForSpen(string line)
         {
-            
+            (bool answer, string before, string _in, string after) funcData = HasFunctions(line);
+            if(funcData.answer)
+            {
+                ParseStringForSpen(funcData.before);
+                ParseStringForSpen(funcData._in);
+                ParseStringForSpen(funcData.after);
+            }
+            else
+            {
+                (bool answer, int index) twoSideOperatorsData = HasTwoSideOperators(line);
+                if(twoSideOperatorsData.answer)
+                {
+                    ParseStringForSpen(line.Substring(0, twoSideOperatorsData.index));
+                    ParseStringForSpen(line.Substring(twoSideOperatorsData.index + 1));
+                }
+                else
+                {
+                    outputSpen.AddSpen(line);
+                }
+            }
         }
 
-        void FindFunctions()
+        (bool, string, string, string) HasFunctions(string line)
         {
+            Regex pattern = new Regex(@"\b([\w|_]+(\s)*[\(]{1})");
+            if(pattern.IsMatch(line))
+            {
+                string match = pattern.Match(line).Value;
+                string beforeFunc = line.Substring(0, pattern.Match(line).Index);
+                int i = pattern.Match(line).Index + match.Length;
+                int left = 1;
+                int right = 0;
+                while(left != right)
+                {
+                    if (line[i] == '(') left++;
+                    if (line[i] == ')') right++;
+                    i++;
+                }
+                string afterFunc = line.Substring(i);
+                string inFunc = line.Substring(pattern.Match(line).Index + match.Length, i - 1 - pattern.Match(line).Index - match.Length);
 
+                return (true, beforeFunc, inFunc, afterFunc);
+            }
+
+            return (false, "", "", "");
         }
 
         static string[] twoSideOperators =
@@ -98,9 +158,19 @@ namespace Lab
             @"([(]{1})|([)]{1})|([{]{1})|([}]{1})"
         };
 
-        void ForTwoSideOperators()
+        (bool, int) HasTwoSideOperators(string input)
         {
-
+            for (int i = 0; i < twoSideOperators.Length; i++)
+            {
+                Regex reg = new Regex(twoSideOperators[i]);
+                if (reg.IsMatch(input))
+                {
+                    string match = reg.Match(input).Value;
+                    int index = input.IndexOf(match);
+                    return (true, index);
+                }
+            }
+            return (false, 0);
         }
 
         void DeleteVarDeclarations(ref string filecode)
