@@ -31,8 +31,21 @@ namespace Lab
                 else
                     return;
             }
+            while (true)
+            {
+                if (spen.Length > 0)
+                {
+                    if (spen[spen.Length - 1] == '\r' || spen[spen.Length - 1] == '\n' || spen[spen.Length - 1] == ' ' || spen[spen.Length - 1] == '\t')
+                        spen = spen.Remove(spen.Length - 1, 1);
+                    else
+                        break;
+                }
+                else
+                    return;
+            }
 
-            //убирать числа
+            if (int.TryParse(spen, out _) || float.TryParse(spen, out _))
+                return;
 
             if (spens.ContainsKey(spen))
                 spens[spen]++;
@@ -144,6 +157,7 @@ namespace Lab
             @"(\bis\b)|(\bas\b)",
             @"(&&)|([\|]{2})",
             @"(->)",
+            @"([(]{1})|([)]{1})",
             @"(==)|(!=)|(>=)|(<=)|(>)|(<)",
             @"(\band\b)|(\bxor\b)|(\bor\b)|(\bin\b)|(\bshr\b)|(\bshl\b)|(\bushr\b)",
             @"(\bdo\b)",
@@ -151,7 +165,6 @@ namespace Lab
             @"([.]{2})",
             @"([\:]{1})",
             @"([\+]{2})|([-]{2})",
-            @"[.]{1}",
             @"([\+]{1})|([-]{1})|([\*]{1})|([/]{1})|([%]{1)}|([=]{1})|([!]{1})",
             @"[;]{1}",
             @"(\bvar\b)|(\bval\b)",
@@ -181,15 +194,27 @@ namespace Lab
             filecode = pattern.Replace(filecode, "");
         }
 
-        bool DeleteFunDeclarations(ref string filecode) //TBD
+        bool DeleteFunDeclarations(ref string filecode) 
         {
-            Regex pattern = new Regex(@"\b(fun)\b");
+            Regex pattern = new Regex(@"\b(fun)(\s)+[\w|_]+(\s)*[\(]{1}");
             bool output = pattern.IsMatch(filecode);
             if(output)
             {
                 int startIndex = pattern.Match(filecode).Index;
+                int i = startIndex;
+                while (filecode[i] != '(') i++;
+                i++;
+                int left = 1;
+                int right = 0;
+                while(left != right)
+                {
+                    if (filecode[i] == '(') left++;
+                    if (filecode[i] == ')') right++;
+                    i++;
+                }
+                filecode = filecode.Remove(startIndex, i - startIndex);
             }
-            return false;
+            return output;
         }
 
 
