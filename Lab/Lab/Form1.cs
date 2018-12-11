@@ -91,24 +91,135 @@ namespace Lab
             }
 
             SpenMetrics metrics1 = new SpenMetrics();
-            Dictionary<string, int>  spensData = metrics1.FindSpen(FileName);
+            Dictionary<string, int> spensData = metrics1.FindSpen(FileName);
             int summarySpen = 0;
 
-            DataTable outputOperatorsData = new DataTable();
-            outputOperatorsData.Columns.Add("Идентификатор");
-            outputOperatorsData.Columns.Add("Спен");
+            DataTable spensTableData = new DataTable();
+            spensTableData.Columns.Add("Идентификатор");
+            spensTableData.Columns.Add("Спен");
 
             foreach (var cur in spensData)
             {
-                DataRow r = outputOperatorsData.NewRow();
+                DataRow r = spensTableData.NewRow();
                 r["Идентификатор"] = cur.Key;
                 r["Спен"] = cur.Value;
                 summarySpen += cur.Value;
-                outputOperatorsData.Rows.Add(r);
+                spensTableData.Rows.Add(r);
+            }
+            SpenTable.DataSource = spensTableData;
+            OutputSpen.Text = $"Суммарный спен - {summarySpen}";
+
+            ChepinFullMetrics metrics2 = new ChepinFullMetrics();
+            ChepinFullData fullChepinData = metrics2.FindChepin(FileName);
+            DataTable fullChepinTable = new DataTable();
+            fullChepinTable.Columns.Add("P");
+            fullChepinTable.Columns.Add("M");
+            fullChepinTable.Columns.Add("C");
+            fullChepinTable.Columns.Add("T");
+            int fullP = fullChepinData.PVars.Count;
+            int fullM = fullChepinData.MVars.Count;
+            int fullC = fullChepinData.CVars.Count;
+            int fullT = fullChepinData.TVars.Count;
+            double fullChepinCalc = fullP + 2 * fullM + 3 * fullC + 0.5 * fullT;
+            FullChebinInfo.Text = $"P = {fullP}\r\nM = {fullM}\r\nC = {fullC}\r\nT = {fullT}\r\nQ = 1 * {fullP} + 2 * {fullM} + 3 * {fullC} + 0,5 * {fullT} = {fullChepinCalc}";
+
+            int maxCount = -1;
+            if (fullChepinData.PVars.Count > maxCount) maxCount = fullChepinData.PVars.Count;
+            if (fullChepinData.MVars.Count > maxCount) maxCount = fullChepinData.MVars.Count;
+            if (fullChepinData.CVars.Count > maxCount) maxCount = fullChepinData.CVars.Count;
+            if (fullChepinData.TVars.Count > maxCount) maxCount = fullChepinData.TVars.Count;
+
+            int j = maxCount - fullChepinData.PVars.Count;
+            while(j > 0)
+            {
+                fullChepinData.PVars.Add("");
+                j--;
+            }
+            j = maxCount - fullChepinData.MVars.Count;
+            while (j > 0)
+            {
+                fullChepinData.MVars.Add("");
+                j--;
+            }
+            j = maxCount - fullChepinData.CVars.Count;
+            while (j > 0)
+            {
+                fullChepinData.CVars.Add("");
+                j--;
+            }
+            j = maxCount - fullChepinData.TVars.Count;
+            while (j > 0)
+            {
+                fullChepinData.TVars.Add("");
+                j--;
             }
 
-            SpenTable.DataSource = outputOperatorsData;
-            OutputSpen.Text = $"Суммарный спен - {summarySpen}";
+            for(int i = 0; i < maxCount; i++)
+            {
+                DataRow r = fullChepinTable.NewRow();
+                r["P"] = fullChepinData.PVars[i];
+                r["M"] = fullChepinData.MVars[i];
+                r["C"] = fullChepinData.CVars[i];
+                r["T"] = fullChepinData.TVars[i];
+                fullChepinTable.Rows.Add(r);
+            }
+            FullChebinTable.DataSource = fullChepinTable;
+
+            ChepinIOMetrics metrics3 = new ChepinIOMetrics();
+            ChepinIOData ioChepinData = metrics3.FindChepin(FileName);
+            DataTable ioChepinTable = new DataTable();
+            ioChepinTable.Columns.Add("P");
+            ioChepinTable.Columns.Add("M");
+            ioChepinTable.Columns.Add("C");
+            ioChepinTable.Columns.Add("T");
+            int ioP = ioChepinData.PVars.Count;
+            int ioM = ioChepinData.MVars.Count;
+            int ioC = ioChepinData.CVars.Count;
+            int ioT = ioChepinData.TVars.Count;
+            double ioChepinCalc = ioP + 2 * ioM + 3 * ioC + 0.5 * ioT;
+            IOChepinInfo.Text = $"P = {ioP}\r\nM = {ioM}\r\nC = {ioC}\r\nT = {ioT}\r\nQ = 1 * {ioP} + 2 * {ioM} + 3 * {ioC} + 0,5 * {ioT} = {ioChepinCalc}";
+
+            maxCount = -1;
+            if (ioChepinData.PVars.Count > maxCount) maxCount = ioChepinData.PVars.Count;
+            if (ioChepinData.MVars.Count > maxCount) maxCount = ioChepinData.MVars.Count;
+            if (ioChepinData.CVars.Count > maxCount) maxCount = ioChepinData.CVars.Count;
+            if (ioChepinData.TVars.Count > maxCount) maxCount = ioChepinData.TVars.Count;
+
+            j = maxCount - ioChepinData.PVars.Count;
+            while (j > 0)
+            {
+                ioChepinData.PVars.Add("");
+                j--;
+            }
+            j = maxCount - ioChepinData.MVars.Count;
+            while (j > 0)
+            {
+                ioChepinData.MVars.Add("");
+                j--;
+            }
+            j = maxCount - ioChepinData.CVars.Count;
+            while (j > 0)
+            {
+                ioChepinData.CVars.Add("");
+                j--;
+            }
+            j = maxCount - ioChepinData.TVars.Count;
+            while (j > 0)
+            {
+                ioChepinData.TVars.Add("");
+                j--;
+            }
+
+            for (int i = 0; i < maxCount; i++)
+            {
+                DataRow r = ioChepinTable.NewRow();
+                r["P"] = ioChepinData.PVars[i];
+                r["M"] = ioChepinData.MVars[i];
+                r["C"] = ioChepinData.CVars[i];
+                r["T"] = ioChepinData.TVars[i];
+                ioChepinTable.Rows.Add(r);
+            }
+            chepinIOTable.DataSource = ioChepinTable;
         }
     }
 }

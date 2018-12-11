@@ -48,7 +48,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Chepin.cs" />
+    <Compile Include="ChepinFullMetrics.cs" />
+    <Compile Include="ChepinIOMetrics.cs" />
+    <Compile Include="SpenMetrics.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

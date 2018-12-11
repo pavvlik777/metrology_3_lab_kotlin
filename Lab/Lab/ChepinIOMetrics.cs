@@ -7,11 +7,8 @@ using System.IO;
 using System.Text.RegularExpressions;
 
 namespace Lab
-{ //Сразу посчитать все переменные. Затем отбросить в управлении, затем те, что в вводе насчитали, затем что есть в функциях либо справа от =
-    public enum ChepinVariableType
-    { P, M, C, T, All, Func }
-
-    public class ChepinFullData
+{
+    public class ChepinIOData
     {
         public List<string> FuncVars;
         public List<string> AllVars;
@@ -20,7 +17,7 @@ namespace Lab
         public List<string> CVars;
         public List<string> TVars;
 
-        public ChepinFullData()
+        public ChepinIOData()
         {
             FuncVars = new List<string>() { };
             AllVars = new List<string>() { };
@@ -63,19 +60,19 @@ namespace Lab
             switch (type)
             {
                 case ChepinVariableType.P:
-                    if (!PVars.Contains(variable))
+                    if (!PVars.Contains(variable) && AllVars.Contains(variable))
                         PVars.Add(variable);
                     break;
                 case ChepinVariableType.M:
-                    if (!MVars.Contains(variable))
+                    if (!MVars.Contains(variable) && AllVars.Contains(variable))
                         MVars.Add(variable);
                     break;
                 case ChepinVariableType.C:
-                    if (!CVars.Contains(variable))
+                    if (!CVars.Contains(variable) && AllVars.Contains(variable))
                         CVars.Add(variable);
                     break;
                 case ChepinVariableType.T:
-                    if (!TVars.Contains(variable))
+                    if (!TVars.Contains(variable) && AllVars.Contains(variable))
                         TVars.Add(variable);
                     break;
                 case ChepinVariableType.All:
@@ -83,23 +80,22 @@ namespace Lab
                         AllVars.Add(variable);
                     break;
                 case ChepinVariableType.Func:
-                    if (!FuncVars.Contains(variable))
+                    if (!FuncVars.Contains(variable) && AllVars.Contains(variable))
                         FuncVars.Add(variable);
                     break;
             }
         }
     }
 
-    public class ChepinFullMetrics
+    public class ChepinIOMetrics
     {
-        public ChepinFullMetrics()
+        public ChepinIOMetrics()
         {
-            outputData = new ChepinFullData();
+            outputData = new ChepinIOData();
         }
+        ChepinIOData outputData;
 
-        ChepinFullData outputData;
-
-        public ChepinFullData FindChepin(string filepath)
+        public ChepinIOData FindChepin(string filepath)
         {
             string filecodeText = "";
             using (StreamReader sr = File.OpenText(filepath))
@@ -116,7 +112,7 @@ namespace Lab
             while (DeleteFunDeclarations(ref filecodeText)) ;
             RemoveSigns(ref filecodeText);
 
-            CountAllVars(filecodeText, ChepinVariableType.All);
+            FindAllVars(filecodeText);
             FindFuncVars(filecodeText);
             FindPType(filecodeText);
             FindCType(filecodeText);
@@ -124,16 +120,6 @@ namespace Lab
             FindTType(filecodeText);
 
             return outputData;
-        }
-
-        void FindTType(string line)
-        {
-            IEnumerable<string> TType = outputData.AllVars.Except(outputData.PVars);
-            TType = TType.Except(outputData.CVars);
-            TType = TType.Except(outputData.MVars);
-
-            foreach (var cur in TType)
-                outputData.AddVariable(cur, ChepinVariableType.T);
         }
 
         void FindFuncVars(string line)
@@ -160,6 +146,51 @@ namespace Lab
             }
         }
 
+        void FindAllVars(string line)
+        {
+            string[] patterns =
+            {
+                @"\b(print(\s)*[\(]{1})",
+                @"\b(println(\s)*[\(]{1})",
+            };
+            for (int j = 0; j < patterns.Length; j++)
+            {
+                Regex pattern = new Regex(patterns[j]);
+                if (pattern.IsMatch(line))
+                {
+                    MatchCollection matches = pattern.Matches(line);
+                    foreach (Match cur in matches)
+                    {
+                        int startIndex = cur.Index + cur.Value.Length;
+                        int i = startIndex;
+                        while (line[i] != '\r') i++;
+                        string targetString = line.Substring(startIndex, i - startIndex);
+                        CountAllVars(targetString, ChepinVariableType.All);
+                    }
+                }
+            }
+            Regex readLinePattern = new Regex(@"(\s)*[=]{1}(\s)*(readLine)(\s)*[\(]{1}");
+            MatchCollection readlineMatches = readLinePattern.Matches(line);
+            foreach (Match cur in readlineMatches)
+            {
+                int startIndex = cur.Index - 1;
+                int i = startIndex;
+                while (line[i] != ' ' && line[i] != '\t' && line[i] != '\r' && line[i] != '\n')
+                    i--;
+                outputData.AddVariable(line.Substring(i + 1, startIndex - i), ChepinVariableType.All);
+            }
+        }
+
+        void FindTType(string line)
+        {
+            IEnumerable<string> TType = outputData.AllVars.Except(outputData.PVars);
+            TType = TType.Except(outputData.CVars);
+            TType = TType.Except(outputData.MVars);
+
+            foreach (var cur in TType)
+                outputData.AddVariable(cur, ChepinVariableType.T);
+        }
+
         void FindMType(string line)
         {
             string[] patterns =
@@ -174,7 +205,7 @@ namespace Lab
             for (int j = 0; j < patterns.Length; j++)
             {
                 Regex pattern = new Regex(patterns[j]);
-                if(pattern.IsMatch(line))
+                if (pattern.IsMatch(line))
                 {
                     MatchCollection matches = pattern.Matches(line);
                     foreach (Match cur in matches)
@@ -201,13 +232,13 @@ namespace Lab
                 @"\b(while(\s)*[\(]{1})",
                 @"\b(when(\s)*[\(]{1})"
             };
-            for(int j = 0; j < patterns.Length; j++)
+            for (int j = 0; j < patterns.Length; j++)
             {
                 Regex pattern = new Regex(patterns[j]);
                 if (pattern.IsMatch(line))
                 {
                     MatchCollection matches = pattern.Matches(line);
-                    foreach(Match cur in matches)
+                    foreach (Match cur in matches)
                     {
                         int startIndex = cur.Index + cur.Value.Length;
                         int i = startIndex;
@@ -316,7 +347,7 @@ namespace Lab
         {
             Regex pattern = new Regex(@"(\s)*[=]{1}(\s)*(readLine)(\s)*[\(]{1}");
             MatchCollection matches = pattern.Matches(line);
-            foreach(Match cur in matches)
+            foreach (Match cur in matches)
             {
                 int startIndex = cur.Index - 1;
                 int i = startIndex;

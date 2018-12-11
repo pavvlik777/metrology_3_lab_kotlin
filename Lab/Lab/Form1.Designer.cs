@@ -34,7 +34,15 @@
             this.ChooseFileButton = new System.Windows.Forms.Button();
             this.OutputSpen = new System.Windows.Forms.Label();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.FullChebinName = new System.Windows.Forms.Label();
+            this.FullChebinTable = new System.Windows.Forms.DataGridView();
+            this.FullChebinInfo = new System.Windows.Forms.TextBox();
+            this.chepinIOTable = new System.Windows.Forms.DataGridView();
+            this.IOChepinInfo = new System.Windows.Forms.TextBox();
+            this.chepinIOName = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.SpenTable)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.FullChebinTable)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chepinIOTable)).BeginInit();
             this.SuspendLayout();
             // 
             // SpenName
@@ -61,7 +69,7 @@
             // 
             // SolveTaskButton
             // 
-            this.SolveTaskButton.Location = new System.Drawing.Point(1215, 48);
+            this.SolveTaskButton.Location = new System.Drawing.Point(804, 3);
             this.SolveTaskButton.Name = "SolveTaskButton";
             this.SolveTaskButton.Size = new System.Drawing.Size(136, 23);
             this.SolveTaskButton.TabIndex = 2;
@@ -71,7 +79,7 @@
             // 
             // ChooseFileButton
             // 
-            this.ChooseFileButton.Location = new System.Drawing.Point(1215, 96);
+            this.ChooseFileButton.Location = new System.Drawing.Point(946, 3);
             this.ChooseFileButton.Name = "ChooseFileButton";
             this.ChooseFileButton.Size = new System.Drawing.Size(136, 23);
             this.ChooseFileButton.TabIndex = 3;
@@ -93,11 +101,79 @@
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
+            // FullChebinName
+            // 
+            this.FullChebinName.AutoSize = true;
+            this.FullChebinName.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.FullChebinName.Location = new System.Drawing.Point(423, 47);
+            this.FullChebinName.Name = "FullChebinName";
+            this.FullChebinName.Size = new System.Drawing.Size(225, 24);
+            this.FullChebinName.TabIndex = 5;
+            this.FullChebinName.Text = "Полная метрика Чебина";
+            // 
+            // FullChebinTable
+            // 
+            this.FullChebinTable.AllowUserToAddRows = false;
+            this.FullChebinTable.AllowUserToDeleteRows = false;
+            this.FullChebinTable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.FullChebinTable.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
+            this.FullChebinTable.Location = new System.Drawing.Point(427, 96);
+            this.FullChebinTable.Name = "FullChebinTable";
+            this.FullChebinTable.ReadOnly = true;
+            this.FullChebinTable.Size = new System.Drawing.Size(471, 448);
+            this.FullChebinTable.TabIndex = 6;
+            // 
+            // FullChebinInfo
+            // 
+            this.FullChebinInfo.Location = new System.Drawing.Point(427, 577);
+            this.FullChebinInfo.Multiline = true;
+            this.FullChebinInfo.Name = "FullChebinInfo";
+            this.FullChebinInfo.ReadOnly = true;
+            this.FullChebinInfo.Size = new System.Drawing.Size(471, 107);
+            this.FullChebinInfo.TabIndex = 7;
+            // 
+            // chepinIOTable
+            // 
+            this.chepinIOTable.AllowUserToAddRows = false;
+            this.chepinIOTable.AllowUserToDeleteRows = false;
+            this.chepinIOTable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.chepinIOTable.EditMode = System.Windows.Forms.DataGridViewEditMode.EditProgrammatically;
+            this.chepinIOTable.Location = new System.Drawing.Point(946, 96);
+            this.chepinIOTable.Name = "chepinIOTable";
+            this.chepinIOTable.ReadOnly = true;
+            this.chepinIOTable.Size = new System.Drawing.Size(495, 448);
+            this.chepinIOTable.TabIndex = 8;
+            // 
+            // IOChepinInfo
+            // 
+            this.IOChepinInfo.Location = new System.Drawing.Point(946, 577);
+            this.IOChepinInfo.Multiline = true;
+            this.IOChepinInfo.Name = "IOChepinInfo";
+            this.IOChepinInfo.ReadOnly = true;
+            this.IOChepinInfo.Size = new System.Drawing.Size(495, 107);
+            this.IOChepinInfo.TabIndex = 9;
+            // 
+            // chepinIOName
+            // 
+            this.chepinIOName.AutoSize = true;
+            this.chepinIOName.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.chepinIOName.Location = new System.Drawing.Point(978, 47);
+            this.chepinIOName.Name = "chepinIOName";
+            this.chepinIOName.Size = new System.Drawing.Size(291, 24);
+            this.chepinIOName.TabIndex = 10;
+            this.chepinIOName.Text = "Метрика Чепина ввода\\вывода";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1491, 803);
+            this.Controls.Add(this.chepinIOName);
+            this.Controls.Add(this.IOChepinInfo);
+            this.Controls.Add(this.chepinIOTable);
+            this.Controls.Add(this.FullChebinInfo);
+            this.Controls.Add(this.FullChebinTable);
+            this.Controls.Add(this.FullChebinName);
             this.Controls.Add(this.OutputSpen);
             this.Controls.Add(this.ChooseFileButton);
             this.Controls.Add(this.SolveTaskButton);
@@ -106,6 +182,8 @@
             this.Name = "Form1";
             this.Text = "Form1";
             ((System.ComponentModel.ISupportInitialize)(this.SpenTable)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.FullChebinTable)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chepinIOTable)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -119,6 +197,12 @@
         private System.Windows.Forms.Button ChooseFileButton;
         private System.Windows.Forms.Label OutputSpen;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.Label FullChebinName;
+        private System.Windows.Forms.DataGridView FullChebinTable;
+        private System.Windows.Forms.TextBox FullChebinInfo;
+        private System.Windows.Forms.DataGridView chepinIOTable;
+        private System.Windows.Forms.TextBox IOChepinInfo;
+        private System.Windows.Forms.Label chepinIOName;
     }
 }
 
