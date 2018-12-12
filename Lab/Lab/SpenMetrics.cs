@@ -75,9 +75,11 @@ namespace Lab
                 }
             }
 
-            DeleteVarDeclarations(ref filecodeText);
+            //DeleteVarDeclarations(ref filecodeText);
             while (DeleteFunDeclarations(ref filecodeText)) ;
-            RemoveSigns(ref filecodeText);
+            //RemoveSigns(ref filecodeText);
+            while (ReplaceStrings(ref filecodeText)) ;
+            while (ReplaceChars(ref filecodeText));
 
             ParseStringForSpen(filecodeText);
             return outputSpen.spens;
@@ -85,8 +87,8 @@ namespace Lab
 
         void RemoveSigns(ref string input)
         {
-            input = input.Replace("{", "");
-            input = input.Replace("}", "");
+            input = input.Replace("{", " ");
+            input = input.Replace("}", " ");
             Regex reg = new Regex(@"\b(else(\s*)->)\b");
             while (reg.IsMatch(input))
             {
@@ -112,11 +114,11 @@ namespace Lab
             }
             else
             {
-                (bool answer, int index) twoSideOperatorsData = HasTwoSideOperators(line);
+                (bool answer, int index, int lenght) twoSideOperatorsData = HasTwoSideOperators(line);
                 if(twoSideOperatorsData.answer)
                 {
                     ParseStringForSpen(line.Substring(0, twoSideOperatorsData.index));
-                    ParseStringForSpen(line.Substring(twoSideOperatorsData.index + 1));
+                    ParseStringForSpen(line.Substring(twoSideOperatorsData.index + twoSideOperatorsData.lenght));
                 }
                 else
                 {
@@ -157,21 +159,75 @@ namespace Lab
             @"(\bis\b)|(\bas\b)",
             @"(&&)|([\|]{2})",
             @"(->)",
-            @"([(]{1})|([)]{1})",
+            @"(\r\n)",
+            @"([\(]{1})|([\)]{1})",
+            @"([\[]{1})|([\]]{1})",
             @"(==)|(!=)|(>=)|(<=)|(>)|(<)",
             @"(\band\b)|(\bxor\b)|(\bor\b)|(\bin\b)|(\bshr\b)|(\bshl\b)|(\bushr\b)",
             @"(\bdo\b)",
             @"(\bcontinue\b)|(\bbreak\b)|(\bimport\b)|(\breturn\b)",
-            @"([.]{2})",
+            @"([.]{2})|([,]{1})",
             @"([\:]{1})",
             @"([\+]{2})|([-]{2})",
             @"([\+]{1})|([-]{1})|([\*]{1})|([/]{1})|([%]{1)}|([=]{1})|([!]{1})",
             @"[;]{1}",
             @"(\bvar\b)|(\bval\b)",
-            @"([(]{1})|([)]{1})|([{]{1})|([}]{1})"
+            @"([(]{1})|([)]{1})|([{]{1})|([}]{1})",
+            @"(Byte)|(Short)|(Int)|(Long)|(Float)|(Double)|(String)",
+            @"(\btrue\b)|(\bfalse\b)|(\belse\b)"
         };
 
-        (bool, int) HasTwoSideOperators(string input)
+        bool ReplaceChars(ref string input)
+        {
+            Regex doubleQuotes = new Regex(@"[']{1}");
+            bool output = doubleQuotes.IsMatch(input);
+            if (output)
+            {
+                Match cur = doubleQuotes.Match(input);
+                int startIndex = cur.Index + 1;
+                int i = startIndex;
+                while (input[i] != '\'' && input[i] != '\r')
+                    i++;
+                if (input[i] == '\r')
+                {
+                    input = input.Remove(startIndex - 1, 1);
+                    input = input.Insert(startIndex - 1, "1");
+                }
+                else
+                {
+                    input = input.Remove(startIndex - 1, i - startIndex + 2);
+                    input = input.Insert(startIndex - 1, "1");
+                }
+            }
+            return output;
+        }
+
+        bool ReplaceStrings(ref string input)
+        {
+            Regex doubleQuotes = new Regex(@"[""]{1}");
+            bool output = doubleQuotes.IsMatch(input);
+            if(output)
+            {
+                Match cur = doubleQuotes.Match(input);
+                int startIndex = cur.Index + 1;
+                int i = startIndex;
+                while (input[i] != '"' && input[i] != '\r')
+                    i++;
+                if(input[i] == '\r')
+                {
+                    input = input.Remove(startIndex - 1, 1);
+                    input = input.Insert(startIndex - 1, "1");
+                }
+                else
+                {
+                    input = input.Remove(startIndex - 1, i - startIndex + 2);
+                    input = input.Insert(startIndex - 1, "1");
+                }
+            }
+            return output;
+        }
+
+        (bool, int, int) HasTwoSideOperators(string input)
         {
             for (int i = 0; i < twoSideOperators.Length; i++)
             {
@@ -180,18 +236,18 @@ namespace Lab
                 {
                     string match = reg.Match(input).Value;
                     int index = input.IndexOf(match);
-                    return (true, index);
+                    return (true, index, match.Length);
                 }
             }
-            return (false, 0);
+            return (false, 0, 0);
         }
 
         void DeleteVarDeclarations(ref string filecode)
         {
             Regex pattern = new Regex(@"\b(var)\b");
-            filecode = pattern.Replace(filecode, "");
+            filecode = pattern.Replace(filecode, " ");
             pattern = new Regex(@"\b(val)\b");
-            filecode = pattern.Replace(filecode, "");
+            filecode = pattern.Replace(filecode, " ");
         }
 
         bool DeleteFunDeclarations(ref string filecode) 

@@ -67,7 +67,7 @@ namespace Lab
                         PVars.Add(variable);
                     break;
                 case ChepinVariableType.M:
-                    if (!MVars.Contains(variable))
+                    if (!MVars.Contains(variable) && !CVars.Contains(variable) && !PVars.Contains(variable))
                         MVars.Add(variable);
                     break;
                 case ChepinVariableType.C:
@@ -112,9 +112,11 @@ namespace Lab
             }
             filecodeText += "\r\n";
 
-            DeleteVarDeclarations(ref filecodeText);
+            //DeleteVarDeclarations(ref filecodeText);
             while (DeleteFunDeclarations(ref filecodeText)) ;
-            RemoveSigns(ref filecodeText);
+            //RemoveSigns(ref filecodeText);
+            while (ReplaceStrings(ref filecodeText)) ;
+            while (ReplaceChars(ref filecodeText)) ;
 
             CountAllVars(filecodeText, ChepinVariableType.All);
             FindFuncVars(filecodeText);
@@ -189,7 +191,9 @@ namespace Lab
             }
             IEnumerable<string> funcVariables = outputData.FuncVars.Except(outputData.CVars);
             foreach (var cur in funcVariables)
+            {
                 outputData.AddVariable(cur, ChepinVariableType.M);
+            }
         }
 
         void FindCType(string line)
@@ -238,11 +242,11 @@ namespace Lab
             }
             else
             {
-                (bool answer, int index) twoSideOperatorsData = HasTwoSideOperators(line);
+                (bool answer, int index, int lenght) twoSideOperatorsData = HasTwoSideOperators(line);
                 if (twoSideOperatorsData.answer)
                 {
                     CountAllVars(line.Substring(0, twoSideOperatorsData.index), type);
-                    CountAllVars(line.Substring(twoSideOperatorsData.index + 1), type);
+                    CountAllVars(line.Substring(twoSideOperatorsData.index + twoSideOperatorsData.lenght), type);
                 }
                 else
                 {
@@ -283,21 +287,75 @@ namespace Lab
             @"(\bis\b)|(\bas\b)",
             @"(&&)|([\|]{2})",
             @"(->)",
+            @"(\r\n)",
             @"([\(]{1})|([\)]{1})",
+            @"([\[]{1})|([\]]{1})",
             @"(==)|(!=)|(>=)|(<=)|(>)|(<)",
             @"(\band\b)|(\bxor\b)|(\bor\b)|(\bin\b)|(\bshr\b)|(\bshl\b)|(\bushr\b)",
             @"(\bdo\b)",
             @"(\bcontinue\b)|(\bbreak\b)|(\bimport\b)|(\breturn\b)",
-            @"([.]{2})",
+            @"([.]{2})|([,]{1})",
             @"([\:]{1})",
             @"([\+]{2})|([-]{2})",
             @"([\+]{1})|([-]{1})|([\*]{1})|([/]{1})|([%]{1)}|([=]{1})|([!]{1})",
             @"[;]{1}",
             @"(\bvar\b)|(\bval\b)",
-            @"([(]{1})|([)]{1})|([{]{1})|([}]{1})"
+            @"([(]{1})|([)]{1})|([{]{1})|([}]{1})",
+            @"(Byte)|(Short)|(Int)|(Long)|(Float)|(Double)|(String)",
+            @"(\btrue\b)|(\bfalse\b)|(\belse\b)"
         };
 
-        (bool, int) HasTwoSideOperators(string input)
+        bool ReplaceChars(ref string input)
+        {
+            Regex doubleQuotes = new Regex(@"[']{1}");
+            bool output = doubleQuotes.IsMatch(input);
+            if (output)
+            {
+                Match cur = doubleQuotes.Match(input);
+                int startIndex = cur.Index + 1;
+                int i = startIndex;
+                while (input[i] != '\'' && input[i] != '\r')
+                    i++;
+                if (input[i] == '\r')
+                {
+                    input = input.Remove(startIndex - 1, 1);
+                    input = input.Insert(startIndex - 1, "1");
+                }
+                else
+                {
+                    input = input.Remove(startIndex - 1, i - startIndex + 2);
+                    input = input.Insert(startIndex - 1, "1");
+                }
+            }
+            return output;
+        }
+
+        bool ReplaceStrings(ref string input)
+        {
+            Regex doubleQuotes = new Regex(@"[""]{1}");
+            bool output = doubleQuotes.IsMatch(input);
+            if (output)
+            {
+                Match cur = doubleQuotes.Match(input);
+                int startIndex = cur.Index + 1;
+                int i = startIndex;
+                while (input[i] != '"' && input[i] != '\r')
+                    i++;
+                if (input[i] == '\r')
+                {
+                    input = input.Remove(startIndex - 1, 1);
+                    input = input.Insert(startIndex - 1, "1");
+                }
+                else
+                {
+                    input = input.Remove(startIndex - 1, i - startIndex + 2);
+                    input = input.Insert(startIndex - 1, "1");
+                }
+            }
+            return output;
+        }
+
+        (bool, int, int) HasTwoSideOperators(string input)
         {
             for (int i = 0; i < twoSideOperators.Length; i++)
             {
@@ -306,10 +364,10 @@ namespace Lab
                 {
                     string match = reg.Match(input).Value;
                     int index = input.IndexOf(match);
-                    return (true, index);
+                    return (true, index, match.Length);
                 }
             }
-            return (false, 0);
+            return (false, 0, 0);
         }
 
         void FindPType(string line)
