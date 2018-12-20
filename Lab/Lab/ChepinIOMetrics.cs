@@ -10,6 +10,7 @@ namespace Lab
 {
     public class ChepinIOData
     {
+        public List<string> TempVars;
         public List<string> FuncVars;
         public List<string> AllVars;
         public List<string> PVars;
@@ -19,12 +20,31 @@ namespace Lab
 
         public ChepinIOData()
         {
+            TempVars = new List<string>() { };
             FuncVars = new List<string>() { };
             AllVars = new List<string>() { };
             PVars = new List<string>() { };
             MVars = new List<string>() { };
             CVars = new List<string>() { };
             TVars = new List<string>() { };
+        }
+
+        public void ClearTempVars()
+        {
+            TempVars = new List<string>() { };
+        }
+
+        public bool IsTempContain(string variable)
+        {
+            return TempVars.Contains(variable);
+        }
+
+        public bool IsListInSomeType(List<string> list)
+        {
+            foreach (string cur in list)
+                if (!CVars.Contains(cur) && !MVars.Contains(cur))
+                    return false;
+            return true;
         }
 
         public void AddVariable(string variable, ChepinVariableType type)
@@ -60,11 +80,11 @@ namespace Lab
             switch (type)
             {
                 case ChepinVariableType.P:
-                    if (!PVars.Contains(variable) && AllVars.Contains(variable))
+                    if (!PVars.Contains(variable) && AllVars.Contains(variable) && !CVars.Contains(variable) && !MVars.Contains(variable))
                         PVars.Add(variable);
                     break;
                 case ChepinVariableType.M:
-                    if (!MVars.Contains(variable) && AllVars.Contains(variable) && !CVars.Contains(variable) && !PVars.Contains(variable))
+                    if (!MVars.Contains(variable) && AllVars.Contains(variable) && !CVars.Contains(variable))
                         MVars.Add(variable);
                     break;
                 case ChepinVariableType.C:
@@ -82,6 +102,10 @@ namespace Lab
                 case ChepinVariableType.Func:
                     if (!FuncVars.Contains(variable) && AllVars.Contains(variable))
                         FuncVars.Add(variable);
+                    break;
+                case ChepinVariableType.Temp:
+                    if (!TempVars.Contains(variable) && AllVars.Contains(variable))
+                        TempVars.Add(variable);
                     break;
             }
         }
@@ -113,15 +137,36 @@ namespace Lab
             //RemoveSigns(ref filecodeText);
             while (ReplaceStrings(ref filecodeText)) ;
             while (ReplaceChars(ref filecodeText)) ;
+            DeleteReadLine(ref filecodeText);
 
             FindAllVars(filecodeText);
             FindFuncVars(filecodeText);
-            FindPType(filecodeText);
             FindCType(filecodeText);
             FindMType(filecodeText);
+            FindPType(filecodeText);
             FindTType(filecodeText);
 
             return outputData;
+        }
+
+        void DeleteReadLine(ref string filecodeText)
+        {
+            Regex pattern = new Regex(@"(\s)*[=]{1}(\s)*(readLine)(\s)*[\(]{1}");
+            filecodeText = pattern.Replace(filecodeText, " readLine(");
+        }
+
+        void FindPType(string line)
+        {
+            Regex pattern = new Regex(@"(\s)*(readLine)(\s)*[\(]{1}");
+            MatchCollection matches = pattern.Matches(line);
+            foreach (Match cur in matches)
+            {
+                int startIndex = cur.Index - 1;
+                int i = startIndex;
+                while (line[i] != ' ' && line[i] != '\t' && line[i] != '\r' && line[i] != '\n')
+                    i--;
+                outputData.AddVariable(line.Substring(i + 1, startIndex - i), ChepinVariableType.P);
+            }
         }
 
         void FindFuncVars(string line)
@@ -171,7 +216,7 @@ namespace Lab
                     }
                 }
             }
-            Regex readLinePattern = new Regex(@"(\s)*[=]{1}(\s)*(readLine)(\s)*[\(]{1}");
+            Regex readLinePattern = new Regex(@"(\s)*(readLine)(\s)*[\(]{1}");
             MatchCollection readlineMatches = readLinePattern.Matches(line);
             foreach (Match cur in readlineMatches)
             {
@@ -191,6 +236,60 @@ namespace Lab
 
             foreach (var cur in TType)
                 outputData.AddVariable(cur, ChepinVariableType.T);
+        }
+
+        List<string> tempList;
+        void FindVariblesInLine(string line)
+        {
+            (bool answer, string before, string _in, string after) funcData = HasFunctions(line);
+            if (funcData.answer)
+            {
+                FindVariblesInLine(funcData.before);
+                FindVariblesInLine(funcData._in);
+                FindVariblesInLine(funcData.after);
+            }
+            else
+            {
+                (bool answer, int index, int lenght) twoSideOperatorsData = HasTwoSideOperators(line);
+                if (twoSideOperatorsData.answer)
+                {
+                    FindVariblesInLine(line.Substring(0, twoSideOperatorsData.index));
+                    FindVariblesInLine(line.Substring(twoSideOperatorsData.index + twoSideOperatorsData.lenght));
+                }
+                else
+                {
+                    string variable = line;
+                    while (true)
+                    {
+                        if (variable.Length > 0)
+                        {
+                            if (variable[0] == '\r' || variable[0] == '\n' || variable[0] == ' ' || variable[0] == '\t')
+                                variable = variable.Remove(0, 1);
+                            else
+                                break;
+                        }
+                        else
+                            return;
+                    }
+                    while (true)
+                    {
+                        if (variable.Length > 0)
+                        {
+                            if (variable[variable.Length - 1] == '\r' || variable[variable.Length - 1] == '\n' || variable[variable.Length - 1] == ' ' || variable[variable.Length - 1] == '\t')
+                                variable = variable.Remove(variable.Length - 1, 1);
+                            else
+                                break;
+                        }
+                        else
+                            return;
+                    }
+
+                    if (int.TryParse(variable, out _) || float.TryParse(variable, out _))
+                        return;
+                    if (!tempList.Contains(variable))
+                        tempList.Add(variable);
+                }
+            }
         }
 
         void FindMType(string line)
@@ -215,8 +314,26 @@ namespace Lab
                         int startIndex = cur.Index + cur.Value.Length;
                         int i = startIndex;
                         while (line[i] != '\r') i++;
-                        string targetString = line.Substring(startIndex, i - startIndex);
-                        CountAllVars(targetString, ChepinVariableType.M);
+                        int endString = i + 1;
+
+                        i = cur.Index;
+                        while (line[i - 1] != '\n') i--;
+                        string targetString = line.Substring(i, cur.Index - i);
+                        tempList = new List<string>() { };
+                        FindVariblesInLine(targetString);
+                        if (outputData.IsListInSomeType(tempList))
+                        {
+                            outputData.ClearTempVars();
+                            continue;
+                        }
+                        string testForT = line.Substring(endString);
+                        CountAllVars(testForT, ChepinVariableType.Temp);
+                        foreach (string curVar in tempList)
+                        {
+                            if (outputData.IsTempContain(curVar))
+                                outputData.AddVariable(curVar, ChepinVariableType.M);
+                        }
+                        outputData.ClearTempVars();
                     }
                 }
             }
@@ -397,20 +514,6 @@ namespace Lab
                 }
             }
             return (false, 0, 0);
-        }
-
-        void FindPType(string line)
-        {
-            Regex pattern = new Regex(@"(\s)*[=]{1}(\s)*(readLine)(\s)*[\(]{1}");
-            MatchCollection matches = pattern.Matches(line);
-            foreach (Match cur in matches)
-            {
-                int startIndex = cur.Index - 1;
-                int i = startIndex;
-                while (line[i] != ' ' && line[i] != '\t' && line[i] != '\r' && line[i] != '\n')
-                    i--;
-                outputData.AddVariable(line.Substring(i + 1, startIndex - i), ChepinVariableType.P);
-            }
         }
 
         void RemoveSigns(ref string input)
